@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Webpage</title>
+</head>
+<body>
+    Serving the Index page
+    <section class="hero">
+        Hero Seection
+    </section>
+    <main>
+        Main Section
+    </main>
+    <footer>
+        <p>
+            <a href="mailto:2021154344@ub.edu.bz">Email Me</a>
+        </p>
+    </footer>
+</body>
+</html>
