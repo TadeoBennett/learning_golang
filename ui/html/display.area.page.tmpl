@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Area</title>
+</head>
+<body>
+    <p>The length of the rectangle is: {{ .Length }} </p>
+    <p>The width of the rectangle is: {{ .Width }} </p>
+    <p>The area of the rectangle is: {{ .Area }} </p>
+    
+    <p>Source code for this page:
+        <a mimetype="text/plain" href="../static/formula/area.txt">area.txt</a>
+    </p>
+
+    <h3>Bored? Try again</h3>
+    <form action="/area-calculator-2" method="POST">
+        <div>
+            <label for="">What is the length of the rectangle?</label>
+            <input type="text" name="length">
+            <br>
+            <label for="">What is the width of the rectangle?</label>
+            <input type="text" name="width">
+        </div>
+        <div>
+            <input type="submit" value="Submit">
+        </div>
+    </form>
+</body>
+</html>
