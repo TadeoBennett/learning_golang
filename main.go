@@ -34,10 +34,27 @@ func main(){
 		log.Fatal(err)
 	}
 
-	fmt.Println("Connection status: success")
+	//Insert a quote
+	insertQuote := `
+	INSERT INTO quotations(author_name, category, quote)
+	VALUES
+	($1, $2, $3);	
+	`
+	
+	_, err = db.Exec(insertQuote, 
+	"Lao Tzu", 
+	"Life",
+	"Mastering others is strength. Mastering yourself is true power.")
+
+	//if the query did not work 
+	if err != nil{
+		log.Fatal(err)
+	}
+
+
+
+
+
+
 }
-
-	//NOTE: Go only gives us the resource if we asked for it. 
-	//Go does not allocate space for something unless there is code for it
-
 
