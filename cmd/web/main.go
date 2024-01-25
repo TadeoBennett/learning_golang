@@ -8,11 +8,11 @@
 package main
 
 import (
-	"html/template"
-	"log"
-	"net/http"
-	"time"
-	"strconv"
+	"html/template" //for creating template files
+	"log" //to use the log for writing something in the terminal
+	"net/http" //to be able to handle requests
+	"time" //to be able to use time functions
+	"strconv" //to convert strings to numerical values
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
