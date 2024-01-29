@@ -77,5 +77,38 @@ func main() {
 	}
 
 	fmt.Println("The recently inserted record has quotation_id: ", quotation_id)
+	
+
+	updateQuote2 := `
+	UPDATE quotations
+	SET category = $1
+	WHERE quotation_id = $2
+	RETURNING quotation_id	
+	`
+
+	new_quotation_id := 0
+	err = db.QueryRow(updateQuote2, "success", 1).Scan(&new_quotation_id)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	fmt.Println("The recently updated record has ID: ", new_quotation_id)
+
+
+	deleteQuote := `
+	DELETE FROM quotations
+	WHERE quotation_id = $1
+	RETURNING quotation_id
+	`
+
+	delete_quotation_id := 0
+	err = db.QueryRow(deleteQuote, 1).Scan(&delete_quotation_id)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	fmt.Println("The recently deleted record has ID: ", delete_quotation_id)
+
+
 
 }
