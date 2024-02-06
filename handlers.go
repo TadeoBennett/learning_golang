@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -38,7 +38,7 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Panicln(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	}	
 }
 
 func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +70,8 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.Redirect(w, r, "/show", http.StatusSeeOther)
+
 }
 
 func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +79,6 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 	readQuotes := `
 	SELECT *
 	FROM quotations
-	LIMIT 5
 	`
 
 	rows, err := app.db.Query(readQuotes) //returns the rows of results
@@ -114,9 +115,25 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 	}
 
 	//Print our quotes
-	for _, quote := range quotes {
-		// fmt.Printf("ID: %d, Date: %s, Author: %s, Category: %s, Quote: %s\n",
-		// 	quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
-		fmt.Fprintf(w, "%v\n", quote)
+	// for _, quote := range quotes {
+	// 	// fmt.Printf("ID: %d, Date: %s, Author: %s, Category: %s, Quote: %s\n",
+	// 	// 	quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
+	// 	fmt.Fprintf(w, "%v\n", quote)
+	// }
+
+
+	ts, err := template.ParseFiles("./ui/html/show_page.tmpl")
+
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	//if there are no errors
+	err = ts.Execute(w, quotes)
+	if err != nil {
+		log.Panicln(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }

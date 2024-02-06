@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuoteBox</title>
+</head>
+<body>
+    <h2>QuoteBox</h2>
+    <hr>
+    <h3>Quotes</h3>
+    {{ if . }} <!-- if there is data-->
+    {{ range . }} <!-- iterate over all quotes-->
+
+    <ul>
+        <li>{{ .Quote }}</li> 
+        <li><strong>--{{ .Author_name }}</strong></li>
+    </ul>
+    {{end}}
+    {{else}}
+    <p>Nothing to see here. Move along...</p>
+    {{end}}
+
+    <footer>
+        <p>
+            <a href="/quote">Insert another quote?</a>
+            </br>
+            <a href="mailto:tadeos.bennett@gmail.com">tadeos.bennett@gmail.com</a>
+        </p>
+    </footer>
+
+
+</body>
+</html>
