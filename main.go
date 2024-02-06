@@ -16,6 +16,15 @@ const (
 	dbname   = "quotebox"
 )
 
+// Assuming Quotation struct definition
+type Quotation struct {
+    Quotation_id   int
+    Insertion_date string
+    Author_name    string
+    Category       string
+    Quote          string
+}
+
 // dsn: data source name
 func main() {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
@@ -64,7 +73,7 @@ func main() {
 	RETURNING quotation_id;	
 	`
 
-	quotation_id := 0; //every variable returned needs a value to store it
+	quotation_id := 0 //every variable returned needs a value to store it
 	//note that QueryRow returns info about the values
 	err = db.QueryRow(insertQuote2,
 		"Lao Tzu",
@@ -77,7 +86,6 @@ func main() {
 	}
 
 	fmt.Println("The recently inserted record has quotation_id: ", quotation_id)
-	
 
 	updateQuote2 := `
 	UPDATE quotations
@@ -88,27 +96,91 @@ func main() {
 
 	new_quotation_id := 0
 	err = db.QueryRow(updateQuote2, "success", 1).Scan(&new_quotation_id)
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("The recently updated record has ID: ", new_quotation_id)
 
+	// deleteQuote := `
+	// DELETE FROM quotations
+	// WHERE quotation_id = $1
+	// RETURNING quotation_id
+	// `
 
-	deleteQuote := `
-	DELETE FROM quotations
-	WHERE quotation_id = $1
-	RETURNING quotation_id
+	// delete_quotation_id := 0
+	// err = db.QueryRow(deleteQuote, 1).Scan(&delete_quotation_id)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println("The recently deleted record has ID: ", delete_quotation_id)
+
+	/*
+		//READING ---------------------------
+		readQuote := `
+		SELECT quotation_id, author_name, quote
+		FROM quotations
+		WHERE quotation_id = $1
+		`
+
+
+		//holds the values gotten back from the db
+		my_quotation_id := 0
+		var author_name string
+		var quote string
+		row := db.QueryRow(readQuote, 2)
+		err = row.Scan(&my_quotation_id, &author_name, &quote)
+		switch err {
+		case sql.ErrNoRows:
+			fmt.Println("Oops! No rows were returned")
+		case nil:
+			fmt.Println(my_quotation_id, author_name, quote)
+		default:
+			log.Fatal(err)
+		}
+	*/
+
+	readQuotes := `
+	SELECT *
+	FROM quotations
 	`
-
-	delete_quotation_id := 0
-	err = db.QueryRow(deleteQuote, 1).Scan(&delete_quotation_id)
-	if err != nil{
+	rows, err := db.Query(readQuotes) //returns the rows of results
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("The recently deleted record has ID: ", delete_quotation_id)
+	//release the result set resource (after checking for errors)
+	defer rows.Close()
 
+	//Store the quotations in a slice of Quotation (struct)
+	var quotes []Quotation
 
+	//Iterate over rows (a result set)
+	for rows.Next() {
+		//Create a Quotation for the row
+		var q Quotation
+
+		err = rows.Scan(&q.Quotation_id, &q.Insertion_date, &q.Author_name, &q.Category, &q.Quote)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//Append to quotes
+		quotes = append(quotes, q)
+	}
+
+	//Always check the rows.Err()
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Print our quotes
+	for _, quote := range quotes {
+		fmt.Printf("ID: %d, Date: %s, Author: %s, Category: %s, Quote: %s\n",
+			quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
+	}
 
 }
