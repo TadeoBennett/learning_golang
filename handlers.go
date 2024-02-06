@@ -9,11 +9,12 @@ import (
 //The handler functions were moved here. You then just need to add "package main"
 //at the top of the file and the save the file and the dependencies gets added automatically
 
-func home(w http.ResponseWriter, r *http.Request) {
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Welcome to Quotebox"))
 }
 
-func createQuoteForm(w http.ResponseWriter, r *http.Request) {
+// these are now hanlder methods of the application type and not handler functions after adding "(app *application)"
+func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles("./ui/html/quotes_form_page.tmpl")
 
 	if err != nil {
@@ -30,7 +31,7 @@ func createQuoteForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createQuote(w http.ResponseWriter, r *http.Request) {
+func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	//go back to the form if this location is not accessed through the post method
 	if r.Method != http.MethodPost {
 		http.Redirect(w, r, "/quote", http.StatusSeeOther)
@@ -52,7 +53,7 @@ func createQuote(w http.ResponseWriter, r *http.Request) {
 	VALUES ($1, $2, $3)
 	`
 
-	_, err = db.Exec(s, author, category, quote)
+	_, err = app.db.Exec(s, author, category, quote)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

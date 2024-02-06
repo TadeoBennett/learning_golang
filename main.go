@@ -33,24 +33,30 @@ func setUpDB()(*sql.DB, error){
 	return db, nil //return the connection and nil(no errors)
 }
 
-
-//this is a global variable approach to connecting to the db to perform crud operations
-//the shorthand notation := does not work outside a function
-//since db needs to be used in two functions we write it outside
-var db, err = setUpDB()
+// Dependencies (things/variables)
+//DEPENDENCY INJECTION
+type application struct {
+	db *sql.DB 
+}
 
 func main() {
 	//FIRST CONNECT TO THE DATABASE --------------------------------
+	var db, err = setUpDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close() //can only close the connection where the function is called
 
+	//using the address tells the compiler to always use the same instance of this application variable
+	app := &application{
+		db: db,
+	}
+
 	//SECOND CREATE THE SERVER INSTANCE ----------------------------------
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/quote", createQuoteForm)
-	mux.HandleFunc("/quote-add", createQuote)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/quote", app.createQuoteForm)
+	mux.HandleFunc("/quote-add", app.createQuote)
 	log.Println("Starting a server on port :4000")
 	err = http.ListenAndServe(":4000", mux)
 	log.Fatal(err)
