@@ -33,9 +33,14 @@ func setUpDB()(*sql.DB, error){
 	return db, nil //return the connection and nil(no errors)
 }
 
+
+//this is a global variable approach to connecting to the db to perform crud operations
+//the shorthand notation := does not work outside a function
+//since db needs to be used in two functions we write it outside
+var db, err = setUpDB()
+
 func main() {
 	//FIRST CONNECT TO THE DATABASE --------------------------------
-	db, err := setUpDB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,6 +50,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/quote", createQuoteForm)
+	mux.HandleFunc("/quote-add", createQuote)
 	log.Println("Starting a server on port :4000")
 	err = http.ListenAndServe(":4000", mux)
 	log.Fatal(err)
