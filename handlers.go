@@ -1,10 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
+
+type Quotation struct {
+	Quotation_id   int
+	Insertion_date time.Time
+	Author_name    string
+	Category       string
+	Quote          string
+}
 
 //The handler functions were moved here. You then just need to add "package main"
 //at the top of the file and the save the file and the dependencies gets added automatically
@@ -60,4 +70,53 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request) {
+
+	readQuotes := `
+	SELECT *
+	FROM quotations
+	LIMIT 5
+	`
+
+	rows, err := app.db.Query(readQuotes) //returns the rows of results
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+	defer rows.Close()
+
+	//Store the quotations in a slice of Quotation (struct)
+	var quotes []Quotation
+
+	//Iterate over rows (a result set)
+	for rows.Next() {
+		//Create a Quotation for the row
+		var q Quotation
+
+		err = rows.Scan(&q.Quotation_id, &q.Insertion_date, &q.Author_name, &q.Category, &q.Quote)
+
+		if err != nil {
+			log.Println(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		//Append to quotes
+		quotes = append(quotes, q)
+	}
+
+	//Always check the rows.Err()
+	err = rows.Err()
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	//Print our quotes
+	for _, quote := range quotes {
+		// fmt.Printf("ID: %d, Date: %s, Author: %s, Category: %s, Quote: %s\n",
+		// 	quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
+		fmt.Fprintf(w, "%v\n", quote)
+	}
 }

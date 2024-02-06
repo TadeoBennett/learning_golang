@@ -52,11 +52,13 @@ func main() {
 		db: db,
 	}
 
+	
 	//SECOND CREATE THE SERVER INSTANCE ----------------------------------
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/quote", app.createQuoteForm)
 	mux.HandleFunc("/quote-add", app.createQuote)
+	mux.HandleFunc("/show", app.displayQuotation)
 	log.Println("Starting a server on port :4000")
 	err = http.ListenAndServe(":4000", mux)
 	log.Fatal(err)
