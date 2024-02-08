@@ -2,10 +2,13 @@ package main
 
 import (
 	// "fmt"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 type Quotation struct {
@@ -38,7 +41,7 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Panicln(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}	
+	}
 }
 
 func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +60,41 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	author := r.PostForm.Get("author_name")
 	category := r.PostForm.Get("category")
 	quote := r.PostForm.Get("quote")
+
+	//check the web form fields for validity. We will use a map to save the errrors
+	// errors := make(map[typeofKEY]typeofVALUE)
+	errors := make(map[string]string)
+
+	//check each field
+	if strings.TrimSpace(author) == "" {
+		errors["author"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(author) > 50 { //RunCountInString is used to count the characters
+		errors["author"] = "This field is too long (max 50 characters)"
+	}
+
+	if strings.TrimSpace(category) == "" {
+		errors["category"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(category) > 25 { //RunCountInString is used to count the characters
+		errors["category"] = "This field is too long (max 50 characters)"
+	}
+
+	if strings.TrimSpace(quote) == "" {
+		errors["quote"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(quote) > 100 { //RunCountInString is used to count the characters
+		errors["quote"] = "This field is too long (max 50 characters)"
+	}
+
+
+	//check if there are errors in the app
+	if len(errors) > 0{
+		// Fprint takes an io writer(the w is a responseWriter)
+		fmt.Fprint(w, errors)
+		return //leave the function if there are errors
+	}
+
+	
+
+
 
 	s := `
 	INSERT INTO quotations(author_name, category, quote)
@@ -120,7 +158,6 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 	// 	// 	quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
 	// 	fmt.Fprintf(w, "%v\n", quote)
 	// }
-
 
 	ts, err := template.ParseFiles("./ui/html/show_page.tmpl")
 
