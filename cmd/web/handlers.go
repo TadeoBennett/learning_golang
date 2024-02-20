@@ -87,7 +87,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 
 	//insert a quote
 	id, err := app.quotes.Insert(author, category, quote)
-	
+
 	//check if an error was returned from the insert function
 	if err != nil {
 		log.Println(err.Error())
@@ -111,6 +111,11 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	//an instance of template data -------------------------------
+	data := &templateData{
+		Quotes: q,
+	}
+
 	//Display quotes using a template
 	ts, err := template.ParseFiles("../../ui/html/show_page.tmpl")
 
@@ -121,7 +126,8 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, q)
+	err = ts.Execute(w, data)
+
 	if err != nil {
 		log.Panicln(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

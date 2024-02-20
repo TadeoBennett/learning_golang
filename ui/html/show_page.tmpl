@@ -9,8 +9,8 @@
     <h2>QuoteBox</h2>
     <hr>
     <h3>Quotes</h3>
-    {{ if . }} <!-- if there is data-->
-    {{ range . }} <!-- iterate over all quotes-->
+    {{ if .Quotes }} <!-- if there is data-->
+    {{ range .Quotes }} <!-- iterate over all quotes-->
 
     <ul>
         <li>{{ .Body }}</li> 
