@@ -3,9 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+
+	_ "github.com/lib/pq"
+	"tadeobennett.net/quotation/pkg/models/postgresql"
+
 )
 
 // provide the credentials for our database
@@ -17,7 +20,7 @@ const (
 	dbname   = "quotebox"
 )
 
-func setUpDB()(*sql.DB, error){
+func setUpDB() (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	// Establish a connection to the database
 	db, err := sql.Open("postgres", dsn)
@@ -34,9 +37,9 @@ func setUpDB()(*sql.DB, error){
 }
 
 // Dependencies (things/variables)
-//DEPENDENCY INJECTION
+// DEPENDENCY INJECTION
 type application struct {
-	db *sql.DB 
+	quotes *postgresql.QuoteModel //references the QuoteModel which has the db connection
 }
 
 func main() {
@@ -47,12 +50,13 @@ func main() {
 	}
 	defer db.Close() //can only close the connection where the function is called
 
-	//using the address tells the compiler to always use the same instance of this application variable
+	//passing the database connection to a model so it can handle other database operations
 	app := &application{
-		db: db,
+		quotes: &postgresql.QuoteModel{
+			DB: db,
+		},
 	}
 
-	
 	//SECOND CREATE THE SERVER INSTANCE ----------------------------------
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.home)

@@ -7,17 +7,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
-type Quotation struct {
-	Quotation_id   int
-	Insertion_date time.Time
-	Author_name    string
-	Category       string
-	Quote          string
-}
+//moved the Quotation struct to another location for better organization
 
 //The handler functions were moved here. You then just need to add "package main"
 //at the top of the file and the save the file and the dependencies gets added automatically
@@ -28,7 +21,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 // these are now hanlder methods of the application type and not handler functions after adding "(app *application)"
 func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles("./ui/html/quotes_form_page.tmpl")
+	ts, err := template.ParseFiles("../../ui/html/quotes_form_page.tmpl")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -57,6 +50,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//get the values from the request
 	author := r.PostForm.Get("author_name")
 	category := r.PostForm.Get("category")
 	quote := r.PostForm.Get("quote")
@@ -84,82 +78,41 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		errors["quote"] = "This field is too long (max 50 characters)"
 	}
 
-
-	//check if there are errors in the app
-	if len(errors) > 0{
+	//check if there are errors in the map
+	if len(errors) > 0 {
 		// Fprint takes an io writer(the w is a responseWriter)
 		fmt.Fprint(w, errors)
 		return //leave the function if there are errors
 	}
 
+	//insert a quote
+	id, err := app.quotes.Insert(author, category, quote)
 	
-
-
-
-	s := `
-	INSERT INTO quotations(author_name, category, quote)
-	VALUES ($1, $2, $3)
-	`
-
-	_, err = app.db.Exec(s, author, category, quote)
+	//check if an error was returned from the insert function
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
+	//won't show on the page because the page has been redirected
+	fmt.Fprintf(w, "row with id %d has been inserted.", id)
+
 	http.Redirect(w, r, "/show", http.StatusSeeOther)
 
 }
 
 func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request) {
+	q, err := app.quotes.Read()
 
-	readQuotes := `
-	SELECT *
-	FROM quotations
-	`
-
-	rows, err := app.db.Query(readQuotes) //returns the rows of results
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
-	defer rows.Close()
-
-	//Store the quotations in a slice of Quotation (struct)
-	var quotes []Quotation
-
-	//Iterate over rows (a result set)
-	for rows.Next() {
-		//Create a Quotation for the row
-		var q Quotation
-
-		err = rows.Scan(&q.Quotation_id, &q.Insertion_date, &q.Author_name, &q.Category, &q.Quote)
-
-		if err != nil {
-			log.Println(err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		//Append to quotes
-		quotes = append(quotes, q)
+		return
 	}
 
-	//Always check the rows.Err()
-	err = rows.Err()
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
-
-	//Print our quotes
-	// for _, quote := range quotes {
-	// 	// fmt.Printf("ID: %d, Date: %s, Author: %s, Category: %s, Quote: %s\n",
-	// 	// 	quote.Quotation_id, quote.Insertion_date, quote.Author_name, quote.Category, quote.Quote)
-	// 	fmt.Fprintf(w, "%v\n", quote)
-	// }
-
-	ts, err := template.ParseFiles("./ui/html/show_page.tmpl")
+	//Display quotes using a template
+	ts, err := template.ParseFiles("../../ui/html/show_page.tmpl")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -168,7 +121,7 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, quotes)
+	err = ts.Execute(w, q)
 	if err != nil {
 		log.Panicln(err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
