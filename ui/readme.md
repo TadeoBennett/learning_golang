@@ -1,0 +1,1 @@
+Note that this html folder can contain other files like CSS, and JS
