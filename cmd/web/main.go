@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -42,6 +43,13 @@ type application struct {
 }
 
 func main() {
+	//tell go to accepts the http adrress from the user
+	// all commandline flags results will be stored in a pointerflag
+
+	//create a commnadline flag
+	addr := flag.String("addr", ":4000", "HTTP network address")
+	flag.Parse()
+
 	//FIRST CONNECT TO THE DATABASE --------------------------------
 	var db, err = setUpDB()
 	if err != nil {
@@ -56,19 +64,18 @@ func main() {
 		},
 	}
 
-	
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/quote", app.createQuoteForm)
-	mux.HandleFunc("/quote-add", app.createQuote)
-	mux.HandleFunc("/show", app.displayQuotation)
+	//create a custom web server
+	srv := &http.Server{
+		Addr:    *addr,
+		Handler: app.routes(), //return the multiplexer
+	}
 
-	//create a file server to serve out static content
-	fileServer := http.FileServer(http.Dir("../../ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
-	log.Println("Starting a server on port :4000")
-	err = http.ListenAndServe(":4000", mux)
+	//if the flag is not provided it will use port :4000 by default as specified in the flag. 
+	// To use another port, do the command: go run . -addr=":5000"
+	//to let the user see how to use the flag, run the command:  go run . -addr
+	log.Printf("Starting server on port %s", *addr)
+	err = srv.ListenAndServe()
 	log.Fatal(err)
 
 }
