@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/lib/pq"
 	"tadeobennett.net/quotation/pkg/models/postgresql"
-
 )
 
 // provide the credentials for our database
@@ -57,12 +56,17 @@ func main() {
 		},
 	}
 
-	//SECOND CREATE THE SERVER INSTANCE ----------------------------------
+	
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/quote", app.createQuoteForm)
 	mux.HandleFunc("/quote-add", app.createQuote)
 	mux.HandleFunc("/show", app.displayQuotation)
+
+	//create a file server to serve out static content
+	fileServer := http.FileServer(http.Dir("../../ui/static/"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
+
 	log.Println("Starting a server on port :4000")
 	err = http.ListenAndServe(":4000", mux)
 	log.Fatal(err)

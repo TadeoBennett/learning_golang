@@ -17,6 +17,7 @@ import (
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Welcome to Quotebox"))
+
 }
 
 // these are now hanlder methods of the application type and not handler functions after adding "(app *application)"
@@ -62,27 +63,42 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	//check each field
 	if strings.TrimSpace(author) == "" {
 		errors["author"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(author) > 50 { //RunCountInString is used to count the characters
+	} else if utf8.RuneCountInString(author) > 10 { //RunCountInString is used to count the characters
 		errors["author"] = "This field is too long (max 50 characters)"
 	}
 
 	if strings.TrimSpace(category) == "" {
 		errors["category"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(category) > 25 { //RunCountInString is used to count the characters
+	} else if utf8.RuneCountInString(category) > 10 { //RunCountInString is used to count the characters
 		errors["category"] = "This field is too long (max 50 characters)"
 	}
 
 	if strings.TrimSpace(quote) == "" {
 		errors["quote"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(quote) > 100 { //RunCountInString is used to count the characters
+	} else if utf8.RuneCountInString(quote) > 20 { //RunCountInString is used to count the characters
 		errors["quote"] = "This field is too long (max 50 characters)"
 	}
 
-	//check if there are errors in the map
-	if len(errors) > 0 {
-		// Fprint takes an io writer(the w is a responseWriter)
-		fmt.Fprint(w, errors)
-		return //leave the function if there are errors
+	if len(errors) > 0 { //an error exists
+		ts, err := template.ParseFiles("../../ui/html/quotes_form_page.tmpl") //load the template file
+
+		if err != nil { //error loading the template
+			log.Println(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		err = ts.Execute(w, &templateData{
+			ErrorsFromForm: errors,
+			FormData:       r.PostForm,
+		})
+		if err != nil {
+			log.Panicln(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		return
 	}
 
 	//insert a quote
