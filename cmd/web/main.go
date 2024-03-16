@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"tadeobennett.net/quotation/pkg/models/postgresql"
@@ -48,7 +49,7 @@ func main() {
 	//to edit the provided address using the commandline, use 'go run . -addr=":number"'
 	addr := flag.String("addr", ":4000", "HTTP network address")
 
-	loadEnvVariables(); //loads the variables in the .env file
+	loadEnvVariables() //loads the variables in the .env file
 
 	host := os.Getenv("DB_HOST")
 	dbname := os.Getenv("DB_NAME")
@@ -60,8 +61,12 @@ func main() {
 		"postgres://"+dbname+":"+password+"@"+host+"/"+user+"?sslmode=disable", "PostgreSQL DSN (Data Source Name)")
 	flag.Parse()
 
+	//Create a logger
+	//logs anything that not an error.
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	//logs an error
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	//FIRST CONNECT TO THE DATABASE --------------------------------
 	var db, err = setUpDB(*dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -79,13 +84,11 @@ func main() {
 	srv := &http.Server{
 		Addr:    *addr,
 		Handler: app.routes(), //return the multiplexer
+		ErrorLog: errorLog, // initialize the standard error log with my own errorlog
 	}
 
-	//if the flag is not provided it will use port :4000 by default as specified in the flag.
-	// To use another port, do the command: go run . -addr=":5000"
-	//to let the user see how to use the flag, run the command:  go run . -addr
-	log.Printf("Starting server on port %s", *addr)
+	infoLog.Printf("Starting server on port %s", *addr)
 	err = srv.ListenAndServe()
-	log.Fatal(err)
+	srv.ErrorLog.Fatal(err)
 
 }
