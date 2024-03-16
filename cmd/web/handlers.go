@@ -16,6 +16,10 @@ import (
 //at the top of the file and the save the file and the dependencies gets added automatically
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		app.notFound(w) //use our custom log
+		return
+	}
 	w.Write([]byte("Welcome to Quotebox"))
 
 }
@@ -26,7 +30,7 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
@@ -34,7 +38,7 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	err = ts.Execute(w, nil)
 	if err != nil {
 		log.Panicln(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 	}
 }
 
@@ -47,7 +51,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +88,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil { //error loading the template
 			log.Println(err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			app.serverError(w, err)
 			return
 		}
 
@@ -94,7 +98,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Panicln(err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			app.serverError(w, err)
 			return
 		}
 
@@ -107,7 +111,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	//check if an error was returned from the insert function
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
@@ -123,7 +127,7 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
@@ -137,7 +141,7 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
@@ -146,6 +150,6 @@ func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		log.Panicln(err.Error())
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.serverError(w, err)
 	}
 }

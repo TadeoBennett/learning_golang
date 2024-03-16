@@ -39,6 +39,8 @@ func loadEnvVariables() {
 
 type application struct {
 	quotes *postgresql.QuoteModel //references the QuoteModel which has the db connection
+	errorLog *log.Logger
+	infoLog  *log.Logger
 }
 
 func main() {
@@ -78,6 +80,8 @@ func main() {
 		quotes: &postgresql.QuoteModel{
 			DB: db,
 		},
+		errorLog: errorLog,
+		infoLog: infoLog,
 	}
 
 	//create a custom web server
