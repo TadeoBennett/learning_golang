@@ -6,7 +6,7 @@ import (
 
 // returns the mux
 // makes the routes function a method of application
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.home)
@@ -18,5 +18,5 @@ func (app *application) routes() *http.ServeMux {
 	fileServer := http.FileServer(http.Dir("../../ui/static/"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
-	return mux
+	return securityHeadersMiddleware(mux) //return a function
 }
