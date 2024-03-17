@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/justinas/alice"
 )
 
 // returns the mux
@@ -18,6 +20,14 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("../../ui/static/"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
-	//the initial request will be passed to the log
-	return app.recoverPanicMiddleware(app.logRequestMiddleware(securityHeadersMiddleware(mux))) 
+	//create a variable to hold my middleware chain in order
+	standardMiddleware := alice.New(
+		app.recoverPanicMiddleware,
+		app.logRequestMiddleware,
+		securityHeadersMiddleware,
+	)
+
+	return standardMiddleware.Then(mux)
+
+	// return app.recoverPanicMiddleware(app.logRequestMiddleware(securityHeadersMiddleware(mux)))
 }
