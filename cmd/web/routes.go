@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
 )
 
@@ -10,15 +11,19 @@ import (
 // makes the routes function a method of application
 func (app *application) routes() http.Handler {
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/quote", app.createQuoteForm)
-	mux.HandleFunc("/quote-add", app.createQuote)
-	mux.HandleFunc("/show", app.displayQuotation)
+	// mux := http.NewServeMux()
+
+	//pat is a third party library to create and handle routers/multiplexer
+	mux := pat.New()
+	mux.Get("/", http.HandlerFunc(app.home))
+	mux.Get("/quote/create", http.HandlerFunc(app.createQuote))
+	mux.Post("/quote/create", http.HandlerFunc(app.createQuote))//post request 
+	mux.Get("/quote/:id", http.HandlerFunc(app.showQuote))
+	// mux.HandleFunc("/show-quote", app.showQuotation)
 
 	//create a file server to serve out static content
 	fileServer := http.FileServer(http.Dir("../../ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
+	mux.Get("/static/", http.StripPrefix("/static/", fileServer))
 
 	//create a variable to hold my middleware chain in order
 	standardMiddleware := alice.New(
