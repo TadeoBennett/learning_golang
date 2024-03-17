@@ -20,7 +20,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w) //use our custom log
 		return
 	}
-	panic("This is not good")
+	// panic("This is not good")
 
 	w.Write([]byte("Welcome to Quotebox"))
 
@@ -118,9 +118,9 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//won't show on the page because the page has been redirected
-	fmt.Fprintf(w, "row with id %d has been inserted.", id)
+	// fmt.Fprintf(w, "row with id %d has been inserted.", id)
 
-	http.Redirect(w, r, "/show", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/show?newquoteid=%d", id), http.StatusSeeOther)
 
 }
 
