@@ -20,6 +20,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w) //use our custom log
 		return
 	}
+	panic("This is not good")
+
 	w.Write([]byte("Welcome to Quotebox"))
 
 }

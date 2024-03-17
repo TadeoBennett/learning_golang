@@ -19,5 +19,5 @@ func (app *application) routes() http.Handler {
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
 	//the initial request will be passed to the log
-	return app.logRequestMiddleware(securityHeadersMiddleware(mux))
+	return app.recoverPanicMiddleware(app.logRequestMiddleware(securityHeadersMiddleware(mux))) 
 }
