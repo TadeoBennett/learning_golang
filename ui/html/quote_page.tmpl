@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuoteBox</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <h2>QuoteBox</h2>
     <hr>
     <h3>Quotes</h3>
-    {{ if .Quotes }} <!-- if there is data-->
-    {{ range .Quotes }} <!-- iterate over all quotes-->
-
-    <ul>
-        <li>{{ .Body }}</li> 
-        <li><strong>--{{ .Author_name }}</strong></li>
-    </ul>
+    {{ with .Flash}}
+        <div class="flash">{{ . }}</div>
     {{end}}
-    {{else}}
-    <p>Nothing to see here. Move along...</p>
+    {{ with .Quote }} <!-- if there is data-->
+        <ul>
+            <li>{{ .Body }}</li> 
+            <li><strong>--{{ .Author_name }}</strong></li>
+        </ul>
     {{end}}
 
     <footer>

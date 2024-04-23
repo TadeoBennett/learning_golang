@@ -2,31 +2,42 @@ package main
 
 import (
 	// "fmt"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"tadeobennett.net/quotation/pkg/models"
 )
 
-//moved the Quotation struct to another location for better organization
-
-//The handler functions were moved here. You then just need to add "package main"
-//at the top of the file and the save the file and the dependencies gets added automatically
-
+// displays all the quotes
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
+		log.Println("page not found")
 		app.notFound(w) //use our custom log
 		return
 	}
-	w.Write([]byte("Welcome to Quotebox"))
+	//the above is taken care of in the routes.go using pat (it only looks for "/")
 
-}
+	q, err := app.quotes.Read()
 
-// these are now hanlder methods of the application type and not handler functions after adding "(app *application)"
-func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles("../../ui/html/quotes_form_page.tmpl")
+	if err != nil {
+		log.Println(err.Error())
+		app.serverError(w, err)
+		return
+	}
+
+	//an instance of template data -------------------------------
+	data := &templateData{
+		Quotes: q,
+	}
+
+	//Display quotes using a template
+	ts, err := template.ParseFiles("../../ui/html/show_page.tmpl")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -35,19 +46,30 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, nil)
+	err = ts.Execute(w, data)
+
 	if err != nil {
 		log.Panicln(err.Error())
 		app.serverError(w, err)
 	}
 }
 
-func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
-	//go back to the form if this location is not accessed through the post method
-	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/quote", http.StatusSeeOther)
+func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) {
+	ts, err := template.ParseFiles("../../ui/html/quotes_form_page.tmpl")
+
+	if err != nil {
+		app.serverError(w, err)
 		return
 	}
+
+	//if there are no errors
+	err = ts.Execute(w, nil)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}
+
+func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
@@ -67,19 +89,19 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	//check each field
 	if strings.TrimSpace(author) == "" {
 		errors["author"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(author) > 10 { //RunCountInString is used to count the characters
-		errors["author"] = "This field is too long (max 50 characters)"
+	} else if utf8.RuneCountInString(author) > 25 { //RunCountInString is used to count the characters
+		errors["author"] = "This field is too long (max 25 characters)"
 	}
 
 	if strings.TrimSpace(category) == "" {
 		errors["category"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(category) > 10 { //RunCountInString is used to count the characters
-		errors["category"] = "This field is too long (max 50 characters)"
+	} else if utf8.RuneCountInString(category) > 15 { //RunCountInString is used to count the characters
+		errors["category"] = "This field is too long (max 15 characters)"
 	}
 
 	if strings.TrimSpace(quote) == "" {
 		errors["quote"] = "This field cannot be left blank"
-	} else if utf8.RuneCountInString(quote) > 20 { //RunCountInString is used to count the characters
+	} else if utf8.RuneCountInString(quote) > 50 { //RunCountInString is used to count the characters
 		errors["quote"] = "This field is too long (max 50 characters)"
 	}
 
@@ -113,43 +135,57 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		app.serverError(w, err)
 		return
-	}
+	}	
 
-	//won't show on the page because the page has been redirected
-	fmt.Fprintf(w, "row with id %d has been inserted.", id)
+	//set some session data after a quote is added
+	app.session.Put(r, "flash", "Quote Successfully added")
 
-	http.Redirect(w, r, "/show", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/quote/%d", id), http.StatusSeeOther)
 
 }
 
-func (app *application) displayQuotation(w http.ResponseWriter, r *http.Request) {
-	q, err := app.quotes.Read()
+func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi((r.URL.Query().Get(":id"))) //gets the ID from the URL as an integer instead of a string
 
-	if err != nil {
-		log.Println(err.Error())
-		app.serverError(w, err)
+	if err != nil || id < 1 {
+		app.notFound(w)
 		return
 	}
 
-	//an instance of template data -------------------------------
+	q, err := app.quotes.Get(id)
+
+	//check the errors returned
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.notFound(w)
+			return
+		} else {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	//look for the entry in the session and once found, is deleted from the esession data
+	//contains an empty string or a flash message
+	flash := app.session.PopString(r, "flash")
+
 	data := &templateData{
-		Quotes: q,
+		Quote: q,
+		Flash:  flash,
 	}
-
-	//Display quotes using a template
-	ts, err := template.ParseFiles("../../ui/html/show_page.tmpl")
-
-	if err != nil {
+	
+	// Display the quote using a template
+	ts, err := template.ParseFiles("../../ui/html/quote_page.tmpl")
+	if err != nil { //error loading the template
 		log.Println(err.Error())
 		app.serverError(w, err)
 		return
 	}
 
-	//if there are no errors
 	err = ts.Execute(w, data)
-
 	if err != nil {
 		log.Panicln(err.Error())
 		app.serverError(w, err)
+		return
 	}
 }

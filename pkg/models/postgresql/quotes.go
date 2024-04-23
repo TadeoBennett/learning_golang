@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"database/sql"
+	"errors"
 
 	"tadeobennett.net/quotation/pkg/models"
 )
@@ -68,4 +69,28 @@ func (m *QuoteModel) Read() ([]*models.Quote, error) {
 	}
 
 	return quotes, nil
+}
+
+// returns a quote struct with the data and an error(if any)
+func (m *QuoteModel) Get(id int) (*models.Quote, error) {
+	s := `
+	SELECT author_name, category, quote
+	FROM quotations
+	WHERE quotation_id = $1
+	`
+	q := &models.Quote{}
+
+	err := m.DB.QueryRow(s, id).Scan(&q.Author_name, &q.Category, &q.Body)
+
+	if err != nil {
+		//allows us to ask go if this error was a specific kind of error
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrRecordNotFound
+		}else{
+			return nil, err
+		}
+	}
+
+	// return the row and no error
+	return q, nil
 }
