@@ -11,26 +11,29 @@ import (
 // makes the routes function a method of application
 func (app *application) routes() http.Handler {
 
-	// mux := http.NewServeMux()
-
-	//pat is a third party library to create and handle routers/multiplexer
-	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Get("/quote/create", http.HandlerFunc(app.createQuote))
-	mux.Post("/quote/create", http.HandlerFunc(app.createQuote))//post request 
-	mux.Get("/quote/:id", http.HandlerFunc(app.showQuote))
-	// mux.HandleFunc("/show-quote", app.showQuotation)
-
-	//create a file server to serve out static content
-	fileServer := http.FileServer(http.Dir("../../ui/static/"))
-	mux.Get("/static/", http.StripPrefix("/static/", fileServer))
-
 	//create a variable to hold my middleware chain in order
 	standardMiddleware := alice.New(
 		app.recoverPanicMiddleware,
 		app.logRequestMiddleware,
 		securityHeadersMiddleware,
 	)
+
+	//loads and saves session data to and from the session cookie
+	dynamicMiddleware := alice.New(app.session.Enable)
+
+	//pat is a third party library to create and handle routers/multiplexer
+	mux := pat.New()
+	// Register a catch-all route using http.NotFoundHandler
+	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
+	mux.Get("/quote/create", dynamicMiddleware.ThenFunc(app.createQuote))
+	mux.Post("/quote/create", dynamicMiddleware.ThenFunc(app.createQuote)) //post request
+	mux.Get("/quote/:id", dynamicMiddleware.ThenFunc(app.showQuote))
+	// Add a catch-all route
+	// mux.HandleFunc("/show-quote", app.showQuotation)
+
+	//create a file server to serve out static content
+	fileServer := http.FileServer(http.Dir("../../ui/static/"))
+	mux.Get("/static/", http.StripPrefix("/static/", fileServer))
 
 	return standardMiddleware.Then(mux)
 

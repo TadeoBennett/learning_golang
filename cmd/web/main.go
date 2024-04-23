@@ -1,13 +1,16 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/golangcollege/sessions"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"tadeobennett.net/quotation/pkg/models/postgresql"
@@ -38,9 +41,10 @@ func loadEnvVariables() {
 }
 
 type application struct {
-	quotes *postgresql.QuoteModel //references the QuoteModel which has the db connection
+	quotes   *postgresql.QuoteModel //references the QuoteModel which has the db connection
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	session  *sessions.Session
 }
 
 func main() {
@@ -59,8 +63,8 @@ func main() {
 	user := os.Getenv("DB_USER")
 
 	//now you can provide a new dsn flag for the connection
-	dsn := flag.String("dsn",
-		"postgres://"+dbname+":"+password+"@"+host+"/"+user+"?sslmode=disable", "PostgreSQL DSN (Data Source Name)")
+	dsn := flag.String("dsn", "postgres://"+dbname+":"+password+"@"+host+"/"+user+"?sslmode=disable", "PostgreSQL DSN (Data Source Name)")
+	secret := flag.String("secret", "8693b89c15217db6a4a90aa41cf0e6d5f31752aaf318b4e184f7c5a93a9a90c2", "Secret Key")
 	flag.Parse()
 
 	//Create a logger
@@ -73,26 +77,43 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close() //can only close the connection where the function is called
+	defer db.Close()
 
-	//passing the database connection to a model so it can handle other database operations
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour //session will expire after 12 hours
+	//encrypted session keys
+	session.Secure = true //makes cookies become encrypted
+
+	//configure TLS
+	//ECDHE - Elliptic curve Diffie-Hellman
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	app := &application{
 		quotes: &postgresql.QuoteModel{
 			DB: db,
 		},
 		errorLog: errorLog,
-		infoLog: infoLog,
+		infoLog:  infoLog,
+		session:  session,
 	}
 
 	//create a custom web server
 	srv := &http.Server{
-		Addr:    *addr,
-		Handler: app.routes(), //return the multiplexer
-		ErrorLog: errorLog, // initialize the standard error log with my own errorlog
+		Addr:     *addr,
+		Handler:  app.routes(), //return the multiplexer
+		ErrorLog: errorLog,     // initialize the standard error log with my own errorlog
+		TLSConfig: tlsConfig,
+		IdleTimeout: time.Minute, //connection time on the server 
+		ReadTimeout: 5 * time.Second, //how long should the server take when reading a request, helps stop DOS, DDOS attacks
+		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on port %s", *addr)
-	err = srv.ListenAndServe()
+	// infoLog.Printf("Starting server on port %s", *addr)
+ 	err = srv.ListenAndServeTLS("../../tls/cert.pem", "../../tls/key.pem") //use the certifate values 
+	// err = srv.ListenAndServe() //use the certifate values 
 	srv.ErrorLog.Fatal(err)
 
 }

@@ -16,10 +16,11 @@ import (
 
 // displays all the quotes
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	// if r.URL.Path != "/" {
-	// 	app.notFound(w) //use our custom log
-	// 	return
-	// }
+	if r.URL.Path != "/" {
+		log.Println("page not found")
+		app.notFound(w) //use our custom log
+		return
+	}
 	//the above is taken care of in the routes.go using pat (it only looks for "/")
 
 	q, err := app.quotes.Read()
@@ -69,12 +70,6 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
-	//go back to the form if this location is not accessed through the post method
-	// if r.Method != http.MethodPost {
-	// 	http.Redirect(w, r, "/quote", http.StatusSeeOther)
-	// 	return
-	// }
-	//the above is only called when we are using post so the code is not necessary
 
 	err := r.ParseForm()
 	if err != nil {
@@ -140,14 +135,17 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		app.serverError(w, err)
 		return
-	}
+	}	
+
+	//set some session data after a quote is added
+	app.session.Put(r, "flash", "Quote Successfully added")
 
 	http.Redirect(w, r, fmt.Sprintf("/quote/%d", id), http.StatusSeeOther)
 
 }
 
 func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi((r.URL.Query().Get(":id"))) //gets the ID from the URL
+	id, err := strconv.Atoi((r.URL.Query().Get(":id"))) //gets the ID from the URL as an integer instead of a string
 
 	if err != nil || id < 1 {
 		app.notFound(w)
@@ -160,10 +158,34 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
 			app.notFound(w)
+			return
 		} else {
 			app.serverError(w, err)
+			return
 		}
 	}
 
-	fmt.Fprintf(w, "%v", q)
+	//look for the entry in the session and once found, is deleted from the esession data
+	//contains an empty string or a flash message
+	flash := app.session.PopString(r, "flash")
+
+	data := &templateData{
+		Quote: q,
+		Flash:  flash,
+	}
+	
+	// Display the quote using a template
+	ts, err := template.ParseFiles("../../ui/html/quote_page.tmpl")
+	if err != nil { //error loading the template
+		log.Println(err.Error())
+		app.serverError(w, err)
+		return
+	}
+
+	err = ts.Execute(w, data)
+	if err != nil {
+		log.Panicln(err.Error())
+		app.serverError(w, err)
+		return
+	}
 }

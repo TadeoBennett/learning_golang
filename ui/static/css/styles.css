@@ -21,6 +21,15 @@ button:hover{
 }
 
 
+.flash{
+    color: black;
+    font-weight: bold;
+    background-color:blue;
+    padding: 18px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
 
 
 
