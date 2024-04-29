@@ -42,6 +42,7 @@ func loadEnvVariables() {
 
 type application struct {
 	quotes   *postgresql.QuoteModel //references the QuoteModel which has the db connection
+	users   *postgresql.UserModel //references the QuoteModel which has the db connection
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	session  *sessions.Session
@@ -93,6 +94,9 @@ func main() {
 
 	app := &application{
 		quotes: &postgresql.QuoteModel{
+			DB: db,
+		},
+		users: &postgresql.UserModel{
 			DB: db,
 		},
 		errorLog: errorLog,

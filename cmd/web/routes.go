@@ -30,6 +30,10 @@ func (app *application) routes() http.Handler {
 	mux.Get("/quote/:id", dynamicMiddleware.ThenFunc(app.showQuote))
 	// Add a catch-all route
 	// mux.HandleFunc("/show-quote", app.showQuotation)
+	mux.Get("/user/signup", dynamicMiddleware.ThenFunc(app.signupUserForm))
+	mux.Post("/user/signup", dynamicMiddleware.ThenFunc(app.signupUser))
+	// mux.Get("/user/login", dynamicMiddleware.ThenFunc(app.loginUserForm))
+	// mux.Post("/user/login", dynamicMiddleware.ThenFunc(app.loginUser))
 
 	//create a file server to serve out static content
 	fileServer := http.FileServer(http.Dir("../../ui/static/"))

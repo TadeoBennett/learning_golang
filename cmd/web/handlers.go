@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -135,7 +136,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		app.serverError(w, err)
 		return
-	}	
+	}
 
 	//set some session data after a quote is added
 	app.session.Put(r, "flash", "Quote Successfully added")
@@ -171,9 +172,9 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 
 	data := &templateData{
 		Quote: q,
-		Flash:  flash,
+		Flash: flash,
 	}
-	
+
 	// Display the quote using a template
 	ts, err := template.ParseFiles("../../ui/html/quote_page.tmpl")
 	if err != nil { //error loading the template
@@ -188,4 +189,119 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+}
+
+func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
+	// fmt.Fprintln(w, "This is the signup form")
+	ts, err := template.ParseFiles("../..//ui/html/signup.page.tmpl")
+
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	//if there are no errors
+	err = ts.Execute(w, nil)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}
+
+func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
+	// fmt.Fprintln(w, "Added a new user")
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	//get the values from the request
+	name := r.PostForm.Get("name")
+	email := r.PostForm.Get("email")
+	password := r.PostForm.Get("password")
+
+	//check the web form fields for validity. We will use a map to save the errrors
+	// errors := make(map[typeofKEY]typeofVALUE)
+	errors_user := make(map[string]string)
+
+	//check each field
+	if strings.TrimSpace(name) == "" {
+		errors_user["name"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(name) > 50 { //RunCountInString is used to count the characters
+		errors_user["name"] = "This field is too long"
+	} else if utf8.RuneCountInString(name) < 5 { //RunCountInString is used to count the characters
+		errors_user["name"] = "This field is too short"
+	}
+
+	if strings.TrimSpace(email) == "" {
+		errors_user["email"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(email) > 60 { //RunCountInString is used to count the characters
+		errors_user["email"] = "This field is too long"
+	}
+
+	//check if an email is properly formed(valid)
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(email) {
+		errors_user["email"] = "Invalid Email"
+	}
+
+	if strings.TrimSpace(password) == "" {
+		errors_user["password"] = "This field cannot be left blank"
+	} else if utf8.RuneCountInString(password) > 50 { //RunCountInString is used to count the characters
+		errors_user["password"] = "This field is too long"
+	} else if utf8.RuneCountInString(password) < 8 { //RunCountInString is used to count the characters
+		errors_user["password"] = "This field is too short"
+	}
+
+	if len(errors_user) > 0 { //an error exists
+		ts, err := template.ParseFiles("../../ui/html/signup.page.tmpl") 
+
+		if err != nil { //error loading the template
+			log.Println(err.Error())
+			app.serverError(w, err)
+			return
+		}
+
+		err = ts.Execute(w, &templateData{
+			ErrorsFromForm: errors_user,
+			FormData:       r.PostForm,
+		})
+		if err != nil {
+			log.Panicln(err.Error())
+			app.serverError(w, err)
+			return
+		}
+		return
+	}
+
+	// insert a user
+	err = app.users.Insert(name, email, password)
+	//check if an error was returned from the insert function
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			errors_user["email"] = "Email already in use"
+			//redisplay the signup form heading
+			ts, err := template.ParseFiles("../../ui/html/signup.page.tmpl")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			//if there are no errors
+			err = ts.Execute(w, &templateData{
+				ErrorsFromForm: errors_user,
+				FormData: r.PostForm,
+			})
+			if err != nil {
+				app.serverError(w, err)
+			}
+			return
+		}
+	}
+
+	//set some session data after a quote is added
+	app.session.Put(r, "flash", "User Successfully added")
+
+	http.Redirect(w, r, "/user/signup?signedup", http.StatusSeeOther)
+
 }
