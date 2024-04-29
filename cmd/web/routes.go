@@ -25,11 +25,9 @@ func (app *application) routes() http.Handler {
 	mux := pat.New()
 	// Register a catch-all route using http.NotFoundHandler
 	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
-	mux.Get("/quote/create", dynamicMiddleware.ThenFunc(app.createQuote))
-	mux.Post("/quote/create", dynamicMiddleware.ThenFunc(app.createQuote)) //post request
+	mux.Get("/quote/create", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.createQuote)) //added a require authentication for seeing this form
+	mux.Post("/quote/create", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.createQuote)) //post request
 	mux.Get("/quote/:id", dynamicMiddleware.ThenFunc(app.showQuote))
-	// Add a catch-all route
-	// mux.HandleFunc("/show-quote", app.showQuotation)
 	mux.Get("/user/signup", dynamicMiddleware.ThenFunc(app.signupUserForm))
 	mux.Post("/user/signup", dynamicMiddleware.ThenFunc(app.signupUser))
 	mux.Get("/user/login", dynamicMiddleware.ThenFunc(app.loginUserForm))

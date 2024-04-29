@@ -36,6 +36,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	//an instance of template data -------------------------------
 	data := &templateData{
 		Quotes: q,
+		IsAuthenticated: app.IsAuthenticated(r),
 	}
 
 	//Display quotes using a template
@@ -65,7 +66,9 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, nil)
+	err = ts.Execute(w, &templateData{
+		IsAuthenticated: app.IsAuthenticated(r),
+	})
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -118,6 +121,7 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		err = ts.Execute(w, &templateData{
 			ErrorsFromForm: errors,
 			FormData:       r.PostForm,
+			IsAuthenticated: app.IsAuthenticated(r),
 		})
 		if err != nil {
 			log.Panicln(err.Error())
@@ -173,6 +177,7 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 	data := &templateData{
 		Quote: q,
 		Flash: flash,
+		IsAuthenticated: app.IsAuthenticated(r),
 	}
 
 	// Display the quote using a template
@@ -201,7 +206,9 @@ func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, nil)
+	err = ts.Execute(w, &templateData{
+		IsAuthenticated: app.IsAuthenticated(r),
+	})
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -266,6 +273,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 		err = ts.Execute(w, &templateData{
 			ErrorsFromForm: errors_user,
 			FormData:       r.PostForm,
+			IsAuthenticated: app.IsAuthenticated(r),
 		})
 		if err != nil {
 			log.Panicln(err.Error())
@@ -291,6 +299,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 			err = ts.Execute(w, &templateData{
 				ErrorsFromForm: errors_user,
 				FormData:       r.PostForm,
+				IsAuthenticated: app.IsAuthenticated(r),
 			})
 			if err != nil {
 				app.serverError(w, err)
@@ -318,7 +327,9 @@ func (app *application) loginUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//if there are no errors
-	err = ts.Execute(w, nil)
+	err = ts.Execute(w, &templateData{
+		IsAuthenticated: app.IsAuthenticated(r),
+	})
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -350,6 +361,7 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 			err = ts.Execute(w, &templateData{
 				ErrorsFromForm: errors_user,
 				FormData:       r.PostForm,
+				IsAuthenticated: app.IsAuthenticated(r),
 			})
 			if err != nil {
 				log.Panicln(err.Error())
@@ -361,7 +373,7 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.session.Put(r, "authenticatedUserId", id)
-	http.Redirect(w, r, "/quote/create", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {

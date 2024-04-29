@@ -8,7 +8,7 @@
 </head>
 <body>
     <header>
-        <h1><a href="/">Quotebox</a></h1>
+        <h1><a href="/">Login</a></h1>
     </header>
     <nav>
         <div>
@@ -17,12 +17,15 @@
         </div>
         <div>
             <a href="/user/signup">Signup</a>
-            <a href="/user/login">Login</a>
+            <!-- <a href="/user/login">Login</a> -->
+            {{if .IsAuthenticated}}
             <form action="/user/logout" method="post">
                 <button>Logout</button>
             </form>
+            {{end}}
         </div>
     </nav>
+    <br><br>
     <form action="/user/login" method="POST">
         {{with .ErrorsFromForm.default}}
             <div class="error">{{.}}</div>
