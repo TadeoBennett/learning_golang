@@ -2,6 +2,7 @@ package main
 
 import (
 	// "fmt"
+
 	"errors"
 	"fmt"
 	"html/template"
@@ -84,7 +85,6 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 	quote := r.PostForm.Get("quote")
 
 	//check the web form fields for validity. We will use a map to save the errrors
-	// errors := make(map[typeofKEY]typeofVALUE)
 	errors := make(map[string]string)
 
 	//check each field
@@ -193,7 +193,7 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintln(w, "This is the signup form")
-	ts, err := template.ParseFiles("../..//ui/html/signup.page.tmpl")
+	ts, err := template.ParseFiles("../../ui/html/signup.page.tmpl")
 
 	if err != nil {
 		app.serverError(w, err)
@@ -255,7 +255,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errors_user) > 0 { //an error exists
-		ts, err := template.ParseFiles("../../ui/html/signup.page.tmpl") 
+		ts, err := template.ParseFiles("../../ui/html/signup.page.tmpl")
 
 		if err != nil { //error loading the template
 			log.Println(err.Error())
@@ -290,11 +290,14 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 			//if there are no errors
 			err = ts.Execute(w, &templateData{
 				ErrorsFromForm: errors_user,
-				FormData: r.PostForm,
+				FormData:       r.PostForm,
 			})
 			if err != nil {
 				app.serverError(w, err)
 			}
+			return
+		}else{
+			app.serverError(w, err)
 			return
 		}
 	}
@@ -302,6 +305,67 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	//set some session data after a quote is added
 	app.session.Put(r, "flash", "User Successfully added")
 
-	http.Redirect(w, r, "/user/signup?signedup", http.StatusSeeOther)
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+}
 
+func (app *application) loginUserForm(w http.ResponseWriter, r *http.Request) {
+	// fmt.Fprintln(w, "This is the signup form")
+	ts, err := template.ParseFiles("../../ui/html/login.page.tmpl")
+
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	//if there are no errors
+	err = ts.Execute(w, nil)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}
+
+func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	email := r.PostForm.Get("email")
+	password := r.PostForm.Get("password")
+
+	errors_user := make(map[string]string)
+	id, err := app.users.Authenticate(email, password)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			errors_user["default"] = "Email or Password is Incorrect"
+			ts, err := template.ParseFiles("../../ui/html/login.page.tmpl") //load the template file
+
+			if err != nil {
+				log.Println(err.Error())
+				app.serverError(w, err)
+				return
+			}
+			err = ts.Execute(w, &templateData{
+				ErrorsFromForm: errors_user,
+				FormData:       r.PostForm,
+			})
+			if err != nil {
+				log.Panicln(err.Error())
+				app.serverError(w, err)
+				return
+			}
+			return
+		}
+		return
+	}
+	app.session.Put(r, "authenticatedUserId", id)
+	http.Redirect(w, r, "/quote/create", http.StatusSeeOther)
+}
+
+func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
+	app.session.Remove(r, "authenticatedUserId")
+	app.session.Put(r, "flash", "You have been logget out successfully")
+	http.Redirect(w, r, "/", http.StatusSeeOther) //go to home when logged out
 }

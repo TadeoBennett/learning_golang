@@ -31,7 +31,7 @@ CREATE TABLE users(
     name text NOT NULL, 
     email citext UNIQUE NOT NULL, -- is case insensitive
     password_hash bytea NOT NULL,
-    activated boolean NOT NULL
+    activated bool NOT NULL DEFAULT TRUE
 );
 
 CREATE EXTENSION IF NOT EXISTS citext;
