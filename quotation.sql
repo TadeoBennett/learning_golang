@@ -24,6 +24,17 @@ CREATE TABLE quotations(
     category text NOT NULL,
     quote text NOT NULL
 );
+DROP TABLE IF EXISTS users;
+CREATE TABLE users(
+    id serial PRIMARY KEY,
+    created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
+    name text NOT NULL, 
+    email citext UNIQUE NOT NULL, -- is case insensitive
+    password_hash bytea NOT NULL,
+    activated bool NOT NULL DEFAULT TRUE
+);
+
+CREATE EXTENSION IF NOT EXISTS citext;
 
 -- insert a quote for testing purposes
 INSERT INTO quotations(author_name, category, quote)

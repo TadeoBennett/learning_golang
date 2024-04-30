@@ -13,20 +13,21 @@
     <hr>
     <form action="/quote/create" method="post" id="quoteform">
         <fieldset>
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <legend>Add a Quote</legend>
             <div>
                 <label for="">Author</label>
                 <!-- if a key exists -->
                 {{ with .ErrorsFromForm.author }}
                     <!-- check for the value of that key-->
-                    <span class="error d-block">{{ . }} </span>
+                    <span class="error">{{ . }} </span>
                 {{end}}
                 <input type="text" name="author_name" value="{{ .FormData.Get "author_name" }}">
             </div>
             <div>
                 <label for="">Category</label>
                 {{ with .ErrorsFromForm.category }}
-                    <span class="error d-block">{{ . }} </span>
+                    <span class="error">{{ . }} </span>
                 {{end}}
                 <input type="text" name="category">
             </div>
@@ -34,7 +35,7 @@
                 <label for="">Quote</label><br>
                 {{ with .ErrorsFromForm.quote }}
                     <!-- check for the value of that key-->
-                    <span class="error d-block">{{ . }} </span>
+                    <span class="error">{{ . }} </span>
                 {{end}}
                 <textarea id="w3review" name="quote" rows="4" cols="50"></textarea>
             </div>

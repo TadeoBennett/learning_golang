@@ -6,8 +6,12 @@ import (
 	"time"
 )
 
-//creating a new error for this model
-var ErrRecordNotFound = errors.New("models: no matching record found")
+var( //so we don't have to write var for every variable declaration
+	//creating new errors for this model
+	ErrRecordNotFound = errors.New("models: no matching record found")
+	ErrInvalidCredentials = errors.New("models: invalid credentials")
+	ErrDuplicateEmail = errors.New("models: duplicate email")
+)
 
 //a struct to hold a quote
 type Quote struct {
@@ -18,4 +22,12 @@ type Quote struct {
 	Body          string
 }
 
+type User struct{
+	ID int
+	Name string
+	Email string
+	HashedPassword []byte
+	Created time.Time
+	Active bool
+}
 

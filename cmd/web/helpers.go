@@ -30,3 +30,8 @@ func(app *application) errRecordNotFound(w http.ResponseWriter, err error){
 	//deal with the error status
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
+
+func(app *application) IsAuthenticated(r *http.Request) bool{
+	return app.session.Exists(r, "authenticatedUserId")
+}
+
