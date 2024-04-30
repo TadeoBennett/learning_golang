@@ -1,19 +1,25 @@
-# Finding the go file that generates certifications 
+# THIS REPO WAS BUILT FROM THE TEACHINGS OF THE INTRODUCTION TO WEB DEVELOPMENT WITH GO PLAYLIST 
 
-## IN WINDOWS
-go run A:\Go\src\crypto\tls\generate_cert.go --rsa-bits=2048 --host=localhost
+### Visit the link to see the playlist:
+https://youtube.com/playlist?list=PLrIUdOr407RPpl6cOWCz8Tk_XKBDyJNht&si=uRA2XR1zSym8APp5
 
---note that this is relative to my go installation directory
+### FOR MORE INFORMATION ABOUT EVERY LESSON, CHECK OUT THE BRANCHES. FOR MORE DETAIL, LOOK AT THE COMMIT HISTORY FOR EACH BRANCH
+
+## LEARNT LESSONS
+Creating a system that handles CRUD operations
+GO + PostgreSQL
+USING templates in GO
+HTTP Request Handling (RESTful routing)
+Form Validation in GO
+Dependency Injection
+Loggers in GO
+Centralized Error Handling
+Middleware in GO
+Session Managing
+Using Flags
+User Authentication and Authorization
+CSRF Protection in GO
 
 
-## IN UBUNTU
-go run /usr/local/go/src/crypto//tls/generate_cert.go --rsa-bits=2048 --host=localhost
 
 
-### Certifcate Formats (PEM)
-PEM - Privacy Enhanced Mail
-
-
-### Note
-After accessing the page via https, you should see a warning. Click on advanced options and find the page link to proceed. 
-Then, see the Page Information using Ctrl + I and going in the security tab. It tells you about the certificate
