@@ -19,7 +19,7 @@ func (app *application) routes() http.Handler {
 	)
 
 	//loads and saves session data to and from the session cookie
-	dynamicMiddleware := alice.New(app.session.Enable)
+	dynamicMiddleware := alice.New(app.session.Enable, noSurf)
 
 	//pat is a third party library to create and handle routers/multiplexer
 	mux := pat.New()

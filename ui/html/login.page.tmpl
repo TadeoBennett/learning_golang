@@ -20,6 +20,7 @@
             <!-- <a href="/user/login">Login</a> -->
             {{if .IsAuthenticated}}
             <form action="/user/logout" method="post">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                 <button>Logout</button>
             </form>
             {{end}}
@@ -27,6 +28,7 @@
     </nav>
     <br><br>
     <form action="/user/login" method="POST">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         {{with .ErrorsFromForm.default}}
             <div class="error">{{.}}</div>
         {{end}}

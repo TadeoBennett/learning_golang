@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/justinas/nosurf"
 	"tadeobennett.net/quotation/pkg/models"
 )
 
@@ -35,10 +36,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	//an instance of template data -------------------------------
 	data := &templateData{
-		Quotes: q,
+		Quotes:          q,
 		IsAuthenticated: app.IsAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	}
-
 	//Display quotes using a template
 	ts, err := template.ParseFiles("../../ui/html/show_page.tmpl")
 
@@ -68,6 +69,7 @@ func (app *application) createQuoteForm(w http.ResponseWriter, r *http.Request) 
 	//if there are no errors
 	err = ts.Execute(w, &templateData{
 		IsAuthenticated: app.IsAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	})
 	if err != nil {
 		app.serverError(w, err)
@@ -119,9 +121,10 @@ func (app *application) createQuote(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = ts.Execute(w, &templateData{
-			ErrorsFromForm: errors,
-			FormData:       r.PostForm,
+			ErrorsFromForm:  errors,
+			FormData:        r.PostForm,
 			IsAuthenticated: app.IsAuthenticated(r),
+			CSRFToken:       nosurf.Token(r),
 		})
 		if err != nil {
 			log.Panicln(err.Error())
@@ -175,9 +178,10 @@ func (app *application) showQuote(w http.ResponseWriter, r *http.Request) {
 	flash := app.session.PopString(r, "flash")
 
 	data := &templateData{
-		Quote: q,
-		Flash: flash,
+		Quote:           q,
+		Flash:           flash,
 		IsAuthenticated: app.IsAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	}
 
 	// Display the quote using a template
@@ -208,6 +212,7 @@ func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
 	//if there are no errors
 	err = ts.Execute(w, &templateData{
 		IsAuthenticated: app.IsAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	})
 	if err != nil {
 		app.serverError(w, err)
@@ -271,9 +276,10 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = ts.Execute(w, &templateData{
-			ErrorsFromForm: errors_user,
-			FormData:       r.PostForm,
+			ErrorsFromForm:  errors_user,
+			FormData:        r.PostForm,
 			IsAuthenticated: app.IsAuthenticated(r),
+			CSRFToken:       nosurf.Token(r),
 		})
 		if err != nil {
 			log.Panicln(err.Error())
@@ -297,15 +303,16 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 			}
 			//if there are no errors
 			err = ts.Execute(w, &templateData{
-				ErrorsFromForm: errors_user,
-				FormData:       r.PostForm,
+				ErrorsFromForm:  errors_user,
+				FormData:        r.PostForm,
 				IsAuthenticated: app.IsAuthenticated(r),
+				CSRFToken:       nosurf.Token(r),
 			})
 			if err != nil {
 				app.serverError(w, err)
 			}
 			return
-		}else{
+		} else {
 			app.serverError(w, err)
 			return
 		}
@@ -329,6 +336,7 @@ func (app *application) loginUserForm(w http.ResponseWriter, r *http.Request) {
 	//if there are no errors
 	err = ts.Execute(w, &templateData{
 		IsAuthenticated: app.IsAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	})
 	if err != nil {
 		app.serverError(w, err)
@@ -359,9 +367,10 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			err = ts.Execute(w, &templateData{
-				ErrorsFromForm: errors_user,
-				FormData:       r.PostForm,
+				ErrorsFromForm:  errors_user,
+				FormData:        r.PostForm,
 				IsAuthenticated: app.IsAuthenticated(r),
+				CSRFToken:       nosurf.Token(r),
 			})
 			if err != nil {
 				log.Panicln(err.Error())
@@ -378,6 +387,6 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
 	app.session.Remove(r, "authenticatedUserId")
-	app.session.Put(r, "flash", "You have been logget out successfully")
+	app.session.Put(r, "flash", "You have been logged out successfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther) //go to home when logged out
 }

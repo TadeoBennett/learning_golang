@@ -8,6 +8,7 @@
 </head>
 <body>
     <form action="/user/signup" method="post" nonvalidate>
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <div>
             <label for="">Name</label>
             {{ with .ErrorsFromForm.name}}
